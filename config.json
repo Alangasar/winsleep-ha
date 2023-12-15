@@ -1,0 +1,7 @@
+{
+  "broker": "tcp://localhost:1883",
+  "port": 1883,
+  "topic": "pc/sleep",
+  "username": "user",
+  "password": "password"
+}
