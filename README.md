@@ -1,7 +1,9 @@
 # Home Assistant MQTT Windows PC Sleep
 
 ## Install
-1. Create switch in configuration.yaml
+1. Add to config.json mqtt connection parameters
+2. Add winsleep-ha.exe to windows startup
+3. Create switch in configuration.yaml
 
 ```
 mqtt:
@@ -9,7 +11,7 @@ mqtt:
       command_topic: "pc/sleep"
 ```
 
-2. Add wol switch
+4. Add wol switch
 
 ```
 switch:
