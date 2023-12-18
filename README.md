@@ -3,7 +3,7 @@
 ## Install
 1. Add to config.json mqtt connection parameters
 2. Add winsleep-ha.exe to windows startup
-3. Create switch in configuration.yaml
+3. Create switch in configuration.yaml and add Button
 
 ```
 mqtt:
@@ -11,7 +11,19 @@ mqtt:
       command_topic: "pc/sleep"
 ```
 
-4. Add wol switch
+```
+type: button
+    tap_action:
+      action: call-service
+      service: mqtt.publish
+      data:
+        payload: "SLEEP"
+        topic: "pc/sleep"
+      target: {}
+    entity: switch.mqtt_switch
+```
+
+4. Or add wol switch
 
 ```
 switch:
