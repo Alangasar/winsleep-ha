@@ -1,13 +1,13 @@
 package main
 
 import (
+	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"time"
-	"encoding/json"
-	"flag"
 
 	"github.com/eclipse/paho.mqtt.golang"
 )
@@ -28,7 +28,7 @@ var f mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
 	
 	if cmd == "SLEEP"{
 		log.Println("GO WINDOWS SLEEP")
-		cmd := exec.Command("rundll32.exe", "powrprof.dll,SetSuspendState", "0,1,0")
+		cmd := exec.Command("rundll32.exe", "powrprof.dll, SetSuspendState Sleep")
 		err := cmd.Run()
 		if err != nil {
 			log.Println(err)
@@ -41,7 +41,7 @@ func main() {
 	// Read config from file
 	config := loadConfig("config.json")
 
-	if (config.Debug){
+	if config.Debug {
 		mqtt.DEBUG = log.New(os.Stdout, "", 0)
 		mqtt.ERROR = log.New(os.Stdout, "", 0)
 	}
