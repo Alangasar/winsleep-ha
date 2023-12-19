@@ -1,13 +1,14 @@
 package main
 
 import (
-	"encoding/json"
-	"flag"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"time"
+	"encoding/json"
+	"os/signal"
+	"syscall"
 
 	"github.com/eclipse/paho.mqtt.golang"
 )
@@ -23,12 +24,15 @@ type Config struct {
 
 
 var f mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
-	// topic := string(msg.Topic())
+	topic := string(msg.Topic())
 	cmd := string(msg.Payload())
 	
+	log.Println(topic)
+	log.Println(cmd)
+
 	if cmd == "SLEEP"{
 		log.Println("GO WINDOWS SLEEP")
-		cmd := exec.Command("rundll32.exe", "powrprof.dll, SetSuspendState Sleep")
+		cmd := exec.Command("rundll32.exe", "powrprof.dll,SetSuspendState", "Sleep")
 		err := cmd.Run()
 		if err != nil {
 			log.Println(err)
@@ -36,12 +40,22 @@ var f mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
 	}
 }
 
+var cH mqtt.OnConnectHandler = func(client mqtt.Client) {
+	log.Println("Connected")
+}
+
+var dH mqtt.ConnectionLostHandler = func(client mqtt.Client, err error) {
+	log.Println(fmt.Sprintf("Disconnected: %s", err))
+}
 
 func main() {
+	keepAlive := make(chan os.Signal)
+    signal.Notify(keepAlive, os.Interrupt, syscall.SIGTERM)
+
 	// Read config from file
 	config := loadConfig("config.json")
 
-	if config.Debug {
+	if (config.Debug){
 		mqtt.DEBUG = log.New(os.Stdout, "", 0)
 		mqtt.ERROR = log.New(os.Stdout, "", 0)
 	}
@@ -52,27 +66,21 @@ func main() {
 	opts.SetKeepAlive(2 * time.Second)
 	opts.SetDefaultPublishHandler(f)
 	opts.SetPingTimeout(1 * time.Second)
+	opts.SetOnConnectHandler(cH)
+	opts.SetConnectionLostHandler(dH)
 
-	num := flag.Int("num", 1, "The number of messages to publish or subscribe (default 1)")
 
 	c := mqtt.NewClient(opts)
 	if token := c.Connect(); token.Wait() && token.Error() != nil {
 		panic(token.Error())
 	}
 
-	if token := c.Subscribe(config.Topic, 0, nil); token.Wait() && token.Error() != nil {
+	if token := c.Subscribe(config.Topic, 0, f); token.Wait() && token.Error() != nil {
 		fmt.Println(token.Error())
 		os.Exit(1)
 	}
 
-	receiveCount := 0
-	choke := make(chan [2]string)
-	
-	for receiveCount < *num {
-		incoming := <-choke
-		log.Printf("RECEIVED TOPIC: %s MESSAGE: %s\n", incoming[0], incoming[1])
-		receiveCount++
-	}
+	<-keepAlive
 }
 
 func loadConfig(filename string) *Config {

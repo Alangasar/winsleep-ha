@@ -38,3 +38,6 @@ switch:
         payload: "SLEEP"
 
 ```
+
+### Notes
+Disable hibernation ```powercfg -h off```
